@@ -1,0 +1,13 @@
+extends ../layouts/auth
+
+block content
+  section(class="panel p-6")
+    form(action="/login" method="POST" class="space-y-5" novalidate)
+      input(type="hidden" name="_csrf" value=csrfToken)
+      div
+        label.form-label(for="email") Email
+        input#email.form-input(type="email" name="email" autocomplete="email" required value=formData.email || "")
+      div
+        label.form-label(for="password") Contrasena
+        input#password.form-input(type="password" name="password" autocomplete="current-password" required)
+      button.btn-primary(type="submit" class="w-full") Entrar

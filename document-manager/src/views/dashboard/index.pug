@@ -1,0 +1,57 @@
+extends ../layouts/main
+
+block content
+  div(class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between")
+    div
+      h2.page-title Dashboard
+      if isAdminDashboard
+        p(class="mt-1 text-sm text-slate-500") Resumen operativo del repositorio documental.
+      else
+        p(class="mt-1 text-sm text-slate-500") Documentos disponibles para tu consulta.
+    if currentUser && currentUser.role === "admin"
+      a.btn-primary(href="/documents/create") Cargar documento
+
+  div(class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3")
+    article.metric-card
+      p(class="text-sm font-medium text-slate-500")= isAdminDashboard ? "Documentos activos" : "Documentos visibles"
+      p(class="mt-3 text-4xl font-semibold text-deep_twilight-500")= totalDocuments
+      p(class="mt-2 text-xs text-slate-500")= isAdminDashboard ? "Archivos disponibles para consulta." : "Archivos asignados en Mostrar."
+    article.metric-card
+      p(class="text-sm font-medium text-slate-500")= isAdminDashboard ? "Categorias activas" : "Categorias visibles"
+      p(class="mt-3 text-4xl font-semibold text-bright_teal_blue-500")= totalCategories
+      p(class="mt-2 text-xs text-slate-500")= isAdminDashboard ? "Clasificacion documental vigente." : "Clasificacion de tus documentos."
+    article.metric-card
+      p(class="text-sm font-medium text-slate-500")= isAdminDashboard ? "Usuarios activos" : "Duenos visibles"
+      p(class="mt-3 text-4xl font-semibold text-turquoise_surf-500")= totalUsers
+      p(class="mt-2 text-xs text-slate-500")= isAdminDashboard ? "Cuentas habilitadas para operar." : "Responsables de tus documentos."
+
+  section(class="panel mt-6 overflow-hidden")
+    div(class="flex items-center justify-between border-b border-slate-200 px-5 py-4")
+      div
+        h3(class="text-base font-semibold text-slate-900") Documentos recientes
+        p(class="mt-1 text-sm text-slate-500")= isAdminDashboard ? "Ultimos archivos registrados en el sistema." : "Ultimos archivos asignados en Mostrar."
+      a(class="text-sm font-semibold text-bright_teal_blue-500 hover:text-bright_teal_blue-600" href="/documents") Ver todos
+
+    if recentDocuments.length
+      div(class="overflow-x-auto")
+        table(class="min-w-full divide-y divide-slate-100")
+          thead.table-header
+            tr
+              th(class="px-4 py-3") Titulo
+              th(class="px-4 py-3") Categoria
+              th(class="px-4 py-3") Usuario
+              th(class="px-4 py-3") Fecha
+              th(class="px-4 py-3 text-right") Accion
+          tbody(class="divide-y divide-slate-100 bg-white")
+            each document in recentDocuments
+              tr(class="hover:bg-slate-50")
+                td.table-cell
+                  p(class="font-semibold text-slate-900")= document.title
+                  p(class="mt-1 text-xs text-slate-500")= document.original_filename
+                td.table-cell= document.category_name || "Sin categoria"
+                td.table-cell= document.uploaded_by_name || "Sin usuario"
+                td.table-cell= formatDate(document.created_at)
+                td.table-cell(class="text-right")
+                  a(class="font-semibold text-bright_teal_blue-500 hover:text-bright_teal_blue-600" href="/documents/" + document.id) Ver
+    else
+      div(class="px-5 py-10 text-center text-sm text-slate-500") No hay documentos cargados todavia.

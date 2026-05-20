@@ -1,0 +1,172 @@
+extends ../layouts/main
+
+block content
+  div(class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between")
+    div
+      h2.page-title Usuarios
+      p(class="mt-1 text-sm text-slate-500") Gestiona cuentas, roles, departamento, empresa y estado de acceso.
+    a.btn-primary(href="/users/create") Nuevo usuario
+
+  form(action="/users" method="GET" class="panel mb-6 grid gap-4 p-4 xl:grid-cols-[1fr_170px_220px_220px_auto]")
+    div
+      label.form-label(for="search") Buscar
+      input#search.form-input(type="search" name="search" value=filters.search placeholder="Nombre o email")
+    div
+      label.form-label(for="role") Rol
+      select#role.form-input(name="role")
+        option(value="" selected=!filters.role) Todos
+        option(value="admin" selected=filters.role === "admin") admin
+        option(value="user" selected=filters.role === "user") user
+    div
+      label.form-label(for="department_id") Departamento
+      select#department_id.form-input(name="department_id")
+        option(value="" selected=!filters.departmentId) Todos
+        each department in departments
+          option(value=department.id selected=String(department.id) === String(filters.departmentId))= department.name
+    div
+      label.form-label(for="company_id") Empresa
+      select#company_id.form-input(name="company_id")
+        option(value="" selected=!filters.companyId) Todas
+        each company in companies
+          option(value=company.id selected=String(company.id) === String(filters.companyId))= company.name
+    div(class="flex items-end gap-2")
+      button.btn-primary(type="submit") Filtrar
+      a.btn-secondary(href="/users") Limpiar
+
+  section(class="panel overflow-hidden")
+    if users.length
+      div(class="overflow-x-auto")
+        table(class="min-w-full divide-y divide-slate-100")
+          thead.table-header
+            tr
+              th(class="px-4 py-3") Usuario
+              th(class="px-4 py-3") Departamento
+              th(class="px-4 py-3") Empresa
+              th(class="px-4 py-3") Rol
+              th(class="px-4 py-3") Estado
+              th(class="px-4 py-3") Creado
+              th(class="px-4 py-3 text-right") Acciones
+          tbody(class="divide-y divide-slate-100 bg-white")
+            each user in users
+              tr(class="hover:bg-slate-50")
+                td.table-cell
+                  p(class="font-semibold text-slate-900")= user.name
+                  p(class="mt-1 text-xs text-slate-500")= user.email
+                td.table-cell= user.department_name || "Sin departamento"
+                td.table-cell= user.company_name || "Sin empresa"
+                td.table-cell
+                  span(class=user.role === "admin" ? "badge bg-bright_teal_blue-900 text-bright_teal_blue-400" : "badge bg-slate-100 text-slate-700")= user.role
+                td.table-cell
+                  if user.is_active
+                    span(class="badge bg-emerald-100 text-emerald-700") Activo
+                  else
+                    span(class="badge bg-slate-200 text-slate-700") Inactivo
+                td.table-cell= formatDate(user.created_at)
+                td.table-cell
+                  div(class="flex justify-end gap-2")
+                    a(class="btn-secondary px-3 py-1.5" href="/users/" + user.id + "/edit") Editar
+                    if currentUser && currentUser.id !== user.id
+                      form(action="/users/" + user.id + "/status?_method=PATCH" method="POST")
+                        input(type="hidden" name="_csrf" value=csrfToken)
+                        button(type="submit" class=user.is_active ? "btn-danger px-3 py-1.5" : "btn-secondary px-3 py-1.5")= user.is_active ? "Desactivar" : "Activar"
+    else
+      div(class="px-5 py-12 text-center")
+        h3(class="text-base font-semibold text-slate-900") No se encontraron usuarios
+        p(class="mt-1 text-sm text-slate-500") Ajusta los filtros o crea un nuevo usuario.
+        a.btn-primary(class="mt-5" href="/users/create") Nuevo usuario
+
+  section#catalogs(class="mt-8")
+    div(class="mb-4")
+      h3(class="text-xl font-semibold text-deep_twilight-500") Catalogos de usuarios
+      p(class="mt-1 text-sm text-slate-500") Departamentos y empresas alimentan los campos del formulario de usuarios.
+
+    div(class="grid gap-6 xl:grid-cols-2")
+      article(class="panel overflow-hidden")
+        div(class="border-b border-slate-200 px-5 py-4")
+          h4(class="text-base font-semibold text-slate-900") Departamentos
+          p(class="mt-1 text-sm text-slate-500") Agrega departamentos y elimina solo los que no tienen usuarios asignados.
+        form(action="/users/catalogs/departments" method="POST" class="grid gap-3 border-b border-slate-100 p-5 md:grid-cols-[1fr_1fr_auto]")
+          input(type="hidden" name="_csrf" value=csrfToken)
+          div
+            label.form-label(for="departmentName") Nombre
+            input#departmentName.form-input(type="text" name="name" maxlength="120" required)
+          div
+            label.form-label(for="departmentDescription") Descripcion
+            input#departmentDescription.form-input(type="text" name="description" maxlength="500")
+          div(class="flex items-end")
+            button.btn-primary(type="submit" class="w-full") Agregar
+        if departments.length
+          div(class="overflow-x-auto")
+            table(class="min-w-full divide-y divide-slate-100")
+              thead.table-header
+                tr
+                  th(class="px-4 py-3") Departamento
+                  th(class="px-4 py-3") Usuarios
+                  th(class="px-4 py-3 text-right") Accion
+              tbody(class="divide-y divide-slate-100")
+                each department in departments
+                  tr(class="hover:bg-slate-50")
+                    td.table-cell
+                      p(class="font-semibold text-slate-900")= department.name
+                      if department.description
+                        p(class="mt-1 text-xs text-slate-500")= department.description
+                    td.table-cell
+                      if department.assigned_users_count > 0
+                        span(class="badge bg-bright_teal_blue-900 text-bright_teal_blue-400") #{department.assigned_users_count} asignado(s)
+                      else
+                        span(class="badge bg-slate-100 text-slate-700") Sin asignar
+                    td.table-cell
+                      if department.assigned_users_count > 0
+                        div(class="flex justify-end")
+                          button(type="button" disabled class="btn-secondary cursor-not-allowed px-3 py-1.5 opacity-60") En uso
+                      else
+                        form(action="/users/catalogs/departments/" + department.id + "?_method=DELETE" method="POST" class="flex justify-end" data-confirm="Eliminar este departamento?")
+                          input(type="hidden" name="_csrf" value=csrfToken)
+                          button(type="submit" class="btn-danger px-3 py-1.5") Eliminar
+        else
+          div(class="px-5 py-8 text-center text-sm text-slate-500") No hay departamentos registrados.
+
+      article(class="panel overflow-hidden")
+        div(class="border-b border-slate-200 px-5 py-4")
+          h4(class="text-base font-semibold text-slate-900") Empresas
+          p(class="mt-1 text-sm text-slate-500") Agrega empresas y elimina solo las que no tienen usuarios asignados.
+        form(action="/users/catalogs/companies" method="POST" class="grid gap-3 border-b border-slate-100 p-5 md:grid-cols-[1fr_1fr_auto]")
+          input(type="hidden" name="_csrf" value=csrfToken)
+          div
+            label.form-label(for="companyName") Nombre
+            input#companyName.form-input(type="text" name="name" maxlength="120" required)
+          div
+            label.form-label(for="companyDescription") Descripcion
+            input#companyDescription.form-input(type="text" name="description" maxlength="500")
+          div(class="flex items-end")
+            button.btn-primary(type="submit" class="w-full") Agregar
+        if companies.length
+          div(class="overflow-x-auto")
+            table(class="min-w-full divide-y divide-slate-100")
+              thead.table-header
+                tr
+                  th(class="px-4 py-3") Empresa
+                  th(class="px-4 py-3") Usuarios
+                  th(class="px-4 py-3 text-right") Accion
+              tbody(class="divide-y divide-slate-100")
+                each company in companies
+                  tr(class="hover:bg-slate-50")
+                    td.table-cell
+                      p(class="font-semibold text-slate-900")= company.name
+                      if company.description
+                        p(class="mt-1 text-xs text-slate-500")= company.description
+                    td.table-cell
+                      if company.assigned_users_count > 0
+                        span(class="badge bg-bright_teal_blue-900 text-bright_teal_blue-400") #{company.assigned_users_count} asignado(s)
+                      else
+                        span(class="badge bg-slate-100 text-slate-700") Sin asignar
+                    td.table-cell
+                      if company.assigned_users_count > 0
+                        div(class="flex justify-end")
+                          button(type="button" disabled class="btn-secondary cursor-not-allowed px-3 py-1.5 opacity-60") En uso
+                      else
+                        form(action="/users/catalogs/companies/" + company.id + "?_method=DELETE" method="POST" class="flex justify-end" data-confirm="Eliminar esta empresa?")
+                          input(type="hidden" name="_csrf" value=csrfToken)
+                          button(type="submit" class="btn-danger px-3 py-1.5") Eliminar
+        else
+          div(class="px-5 py-8 text-center text-sm text-slate-500") No hay empresas registradas.

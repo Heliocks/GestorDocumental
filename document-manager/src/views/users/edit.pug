@@ -1,0 +1,46 @@
+extends ../layouts/main
+
+block content
+  div(class="mb-6")
+    h2.page-title Editar usuario
+    p(class="mt-1 text-sm text-slate-500") Actualiza datos de acceso, rol, departamento, empresa y estado.
+
+  section(class="panel max-w-3xl p-6")
+    form(action="/users/" + user.id + "?_method=PUT" method="POST" class="space-y-5" novalidate)
+      input(type="hidden" name="_csrf" value=csrfToken)
+      div(class="grid gap-5 md:grid-cols-2")
+        div
+          label.form-label(for="name") Nombre
+          input#name.form-input(type="text" name="name" required maxlength="120" value=formData.name || "")
+        div
+          label.form-label(for="email") Email
+          input#email.form-input(type="email" name="email" required value=formData.email || "")
+        div
+          label.form-label(for="password") Nueva contrasena
+          input#password.form-input(type="password" name="password" minlength="8" maxlength="72")
+          p.form-help Deja este campo vacio para conservar la contrasena actual.
+        div
+          label.form-label(for="role") Rol
+          select#role.form-input(name="role" required)
+            option(value="user" selected=formData.role === "user") user
+            option(value="admin" selected=formData.role === "admin") admin
+        div
+          label.form-label(for="department_id") Departamento
+          select#department_id.form-input(name="department_id")
+            option(value="" selected=!formData.department_id) Sin departamento
+            each department in departments
+              option(value=department.id selected=String(department.id) === String(formData.department_id))= department.name + (department.is_active ? "" : " (inactivo)")
+        div
+          label.form-label(for="company_id") Empresa
+          select#company_id.form-input(name="company_id")
+            option(value="" selected=!formData.company_id) Sin empresa
+            each company in companies
+              option(value=company.id selected=String(company.id) === String(formData.company_id))= company.name + (company.is_active ? "" : " (inactiva)")
+        div
+          label.form-label(for="is_active") Estado
+          select#is_active.form-input(name="is_active" required)
+            option(value="true" selected=String(formData.is_active) === "true") Activo
+            option(value="false" selected=String(formData.is_active) === "false") Inactivo
+      div(class="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end")
+        a.btn-secondary(href="/users") Cancelar
+        button.btn-primary(type="submit") Actualizar usuario

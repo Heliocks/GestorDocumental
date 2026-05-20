@@ -1,0 +1,152 @@
+extends ../layouts/main
+
+block content
+  - const selectedOwner = ownerUsers.find(owner => String(owner.id) === String(formData.owner_user_id))
+  - const selectedOwnerLabel = selectedOwner ? `${selectedOwner.name} - ${selectedOwner.email}` : 'Sin dueño seleccionado'
+  - const selectedVisibleUserIds = Array.isArray(formData.visible_user_ids) ? formData.visible_user_ids.map(String) : String(formData.visible_user_ids || '').split(',').filter(Boolean)
+  - const selectedVisibleUsers = ownerUsers.filter(owner => selectedVisibleUserIds.includes(String(owner.id)))
+  - const selectedVisibleLabel = selectedVisibleUsers.length ? `${selectedVisibleUsers.length} usuario(s) seleccionado(s)` : 'Sin usuarios seleccionados'
+  - const selectedVisibleNames = selectedVisibleUsers.map(owner => owner.name).join(', ')
+  div(class="mb-6")
+    h2.page-title Cargar documento
+    p(class="mt-1 text-sm text-slate-500") Registra metadata, dueño, fecha y archivo fisico en el repositorio local.
+
+  section(class="panel max-w-5xl p-6")
+    form(action="/documents" method="POST" enctype="multipart/form-data" class="space-y-5" novalidate)
+      input(type="hidden" name="_csrf" value=csrfToken)
+      div
+        label.form-label(for="title") Titulo
+        input#title.form-input(type="text" name="title" required maxlength="160" value=formData.title || "")
+      div
+        label.form-label(for="description") Descripcion
+        textarea#description.form-input(name="description" rows="4" maxlength="1000")= formData.description || ""
+      div(class="grid gap-5 md:grid-cols-2")
+        div
+          label.form-label(for="document_date") Fecha de alta
+          input#document_date.form-input(type="date" name="document_date" required value=formData.document_date || "")
+        div
+          label.form-label(for="document_status") Estado
+          select#document_status.form-input(name="document_status" required)
+            each status in documentStatuses
+              option(value=status selected=(formData.document_status || "Creación") === status)= status
+        div
+          p.form-label Dueño
+          input#owner_user_id(type="hidden" name="owner_user_id" value=formData.owner_user_id || "")
+          div(class="flex flex-col gap-3 rounded-md border border-slate-300 bg-white p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between")
+            div(class="min-w-0")
+              p#ownerPickerDisplay(class=selectedOwner ? "truncate text-sm font-semibold text-slate-900" : "truncate text-sm font-medium text-slate-500")= selectedOwnerLabel
+              p(class="mt-1 text-xs text-slate-500") Selecciona un solo usuario como dueño del documento.
+            button#ownerPickerOpen(type="button" class="btn-secondary shrink-0" disabled=!ownerUsers.length) Seleccionar dueño
+        div
+          p.form-label Mostrar
+          input#visible_user_ids(type="hidden" name="visible_user_ids" value=selectedVisibleUserIds.join(","))
+          div(class="flex flex-col gap-3 rounded-md border border-slate-300 bg-white p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between")
+            div(class="min-w-0")
+              p#visiblePickerDisplay(class=selectedVisibleUsers.length ? "truncate text-sm font-semibold text-slate-900" : "truncate text-sm font-medium text-slate-500")= selectedVisibleLabel
+              p#visiblePickerNames(class="mt-1 truncate text-xs text-slate-500")= selectedVisibleNames || "Selecciona los usuarios que podran ver el documento."
+            button#visiblePickerOpen(type="button" class="btn-secondary shrink-0" disabled=!ownerUsers.length) Seleccionar usuarios
+        div
+          label.form-label(for="category_id") Categoria
+          select#category_id.form-input(name="category_id" required)
+            option(value="") Selecciona una categoria
+            each category in categories
+              option(value=category.id selected=String(category.id) === String(formData.category_id))= category.name
+        div
+          label.form-label(for="department_id") Departamento
+          select#department_id.form-input(name="department_id" required)
+            option(value="") Selecciona un departamento
+            each department in departments
+              option(value=department.id selected=String(department.id) === String(formData.department_id))= department.name
+        div
+          label.form-label(for="company_id") Empresa
+          select#company_id.form-input(name="company_id" required)
+            option(value="") Selecciona una empresa
+            each company in companies
+              option(value=company.id selected=String(company.id) === String(formData.company_id))= company.name
+      div
+        label.form-label(for="document") Archivo
+        input#document.form-input(type="file" name="document" required accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.webp")
+        p.form-help PDF, Word, Excel e imagenes. Maximo 15 MB.
+      div(class="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end")
+        a.btn-secondary(href="/documents") Cancelar
+        button.btn-primary(type="submit") Guardar documento
+
+      div#ownerPickerModal(class="fixed inset-0 z-50 hidden" aria-hidden="true")
+        div#ownerPickerBackdrop(class="absolute inset-0 bg-slate-900/50")
+        div(class="relative flex min-h-full items-center justify-center p-4")
+          div(class="w-full max-w-3xl rounded-lg bg-white shadow-xl")
+            div(class="flex items-center justify-between border-b border-slate-200 px-5 py-4")
+              div
+                h3(class="text-base font-semibold text-slate-900") Seleccionar dueño
+                p(class="mt-1 text-sm text-slate-500") Elige un usuario y confirma con Aceptar.
+              button#ownerPickerCancelTop(type="button" class="rounded-md p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900" aria-label="Cerrar") X
+            if ownerUsers.length
+              div(class="grid gap-3 border-b border-slate-200 px-5 py-4 sm:grid-cols-2")
+                div
+                  label.form-label(for="ownerDepartmentFilter") Departamento
+                  select#ownerDepartmentFilter.form-input
+                    option(value="") Todos
+                    each department in departments
+                      option(value=department.id)= department.name
+                div
+                  label.form-label(for="ownerCompanyFilter") Empresa
+                  select#ownerCompanyFilter.form-input
+                    option(value="") Todas
+                    each company in companies
+                      option(value=company.id)= company.name
+              div(class="max-h-[60vh] overflow-y-auto px-5 py-4")
+                div#ownerPickerEmpty(class="hidden rounded-md border border-dashed border-slate-300 px-4 py-6 text-center text-sm text-slate-500") No hay usuarios con estos filtros.
+                div(class="space-y-2")
+                  each owner in ownerUsers
+                    label(class="flex cursor-pointer items-start gap-3 rounded-md border border-slate-200 p-3 transition hover:border-bright_teal_blue-500 hover:bg-light_cyan-900" data-owner-option="true" data-department-id=owner.department_id || "" data-company-id=owner.company_id || "")
+                      input(type="radio" name="owner_candidate_id" value=owner.id checked=String(owner.id) === String(formData.owner_user_id) class="mt-1 h-4 w-4 border-slate-300 text-bright_teal_blue-500 focus:ring-frosted_blue-500" data-owner-label=owner.name + " - " + owner.email)
+                      span(class="min-w-0")
+                        span(class="block text-sm font-semibold text-slate-900")= owner.name
+                        span(class="block truncate text-xs text-slate-500")= owner.email
+                        if owner.department_name || owner.company_name
+                          span(class="mt-1 block text-xs text-slate-500") #{owner.department_name || 'Sin departamento'} / #{owner.company_name || 'Sin empresa'}
+            else
+              div(class="px-5 py-8 text-center text-sm text-slate-500") No hay usuarios activos disponibles.
+            div(class="flex flex-col-reverse gap-3 border-t border-slate-200 px-5 py-4 sm:flex-row sm:justify-end")
+              button#ownerPickerCancel(type="button" class="btn-secondary") Cancelar
+              button#ownerPickerAccept(type="button" class="btn-primary" disabled=!ownerUsers.length) Aceptar
+
+      div#visiblePickerModal(class="fixed inset-0 z-50 hidden" aria-hidden="true")
+        div#visiblePickerBackdrop(class="absolute inset-0 bg-slate-900/50")
+        div(class="relative flex min-h-full items-center justify-center p-4")
+          div(class="w-full max-w-3xl rounded-lg bg-white shadow-xl")
+            div(class="flex items-center justify-between border-b border-slate-200 px-5 py-4")
+              div
+                h3(class="text-base font-semibold text-slate-900") Mostrar
+                p(class="mt-1 text-sm text-slate-500") Elige uno o mas usuarios y confirma con Aceptar.
+              button#visiblePickerCancelTop(type="button" class="rounded-md p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900" aria-label="Cerrar") X
+            if ownerUsers.length
+              div(class="grid gap-3 border-b border-slate-200 px-5 py-4 sm:grid-cols-2")
+                div
+                  label.form-label(for="visibleDepartmentFilter") Departamento
+                  select#visibleDepartmentFilter.form-input
+                    option(value="") Todos
+                    each department in departments
+                      option(value=department.id)= department.name
+                div
+                  label.form-label(for="visibleCompanyFilter") Empresa
+                  select#visibleCompanyFilter.form-input
+                    option(value="") Todas
+                    each company in companies
+                      option(value=company.id)= company.name
+              div(class="max-h-[60vh] overflow-y-auto px-5 py-4")
+                div#visiblePickerEmpty(class="hidden rounded-md border border-dashed border-slate-300 px-4 py-6 text-center text-sm text-slate-500") No hay usuarios con estos filtros.
+                div(class="space-y-2")
+                  each owner in ownerUsers
+                    label(class="flex cursor-pointer items-start gap-3 rounded-md border border-slate-200 p-3 transition hover:border-bright_teal_blue-500 hover:bg-light_cyan-900" data-visible-option="true" data-department-id=owner.department_id || "" data-company-id=owner.company_id || "")
+                      input(type="checkbox" value=owner.id checked=selectedVisibleUserIds.includes(String(owner.id)) class="mt-1 h-4 w-4 rounded border-slate-300 text-bright_teal_blue-500 focus:ring-frosted_blue-500" data-visible-candidate="true" data-visible-label=owner.name + " - " + owner.email)
+                      span(class="min-w-0")
+                        span(class="block text-sm font-semibold text-slate-900")= owner.name
+                        span(class="block truncate text-xs text-slate-500")= owner.email
+                        if owner.department_name || owner.company_name
+                          span(class="mt-1 block text-xs text-slate-500") #{owner.department_name || 'Sin departamento'} / #{owner.company_name || 'Sin empresa'}
+            else
+              div(class="px-5 py-8 text-center text-sm text-slate-500") No hay usuarios activos disponibles.
+            div(class="flex flex-col-reverse gap-3 border-t border-slate-200 px-5 py-4 sm:flex-row sm:justify-end")
+              button#visiblePickerCancel(type="button" class="btn-secondary") Cancelar
+              button#visiblePickerAccept(type="button" class="btn-primary" disabled=!ownerUsers.length) Aceptar
