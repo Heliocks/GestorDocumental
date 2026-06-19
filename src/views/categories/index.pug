@@ -1,0 +1,44 @@
+extends ../layouts/main
+
+block content
+  div(class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between")
+    div
+      h2.page-title Categorias
+      p(class="mt-1 text-sm text-slate-500") Administra la clasificacion documental del sistema.
+    a.btn-primary(href="/categories/create") Nueva categoria
+
+  section(class="panel overflow-hidden")
+    if categories.length
+      div(class="overflow-x-auto")
+        table(class="min-w-full divide-y divide-slate-100")
+          thead.table-header
+            tr
+              th(class="px-4 py-3") Nombre
+              th(class="px-4 py-3") Descripcion
+              th(class="px-4 py-3") Estado
+              th(class="px-4 py-3") Actualizada
+              th(class="px-4 py-3 text-right") Acciones
+          tbody(class="divide-y divide-slate-100 bg-white")
+            each category in categories
+              tr(class="hover:bg-slate-50")
+                td.table-cell
+                  p(class="font-semibold text-slate-900")= category.name
+                td.table-cell(class="max-w-lg")
+                  p(class="line-clamp-2")= category.description || "Sin descripcion"
+                td.table-cell
+                  if category.is_active
+                    span(class="badge bg-emerald-100 text-emerald-700") Activa
+                  else
+                    span(class="badge bg-slate-200 text-slate-700") Inactiva
+                td.table-cell= formatDate(category.updated_at)
+                td.table-cell
+                  div(class="flex justify-end gap-2")
+                    a(class="btn-secondary px-3 py-1.5" href="/categories/" + category.id + "/edit") Editar
+                    form(action="/categories/" + category.id + "/status?_method=PATCH" method="POST")
+                      input(type="hidden" name="_csrf" value=csrfToken)
+                      button(type="submit" class=category.is_active ? "btn-danger px-3 py-1.5" : "btn-secondary px-3 py-1.5")= category.is_active ? "Desactivar" : "Activar"
+    else
+      div(class="px-5 py-12 text-center")
+        h3(class="text-base font-semibold text-slate-900") No hay categorias
+        p(class="mt-1 text-sm text-slate-500") Crea la primera categoria para clasificar documentos.
+        a.btn-primary(class="mt-5" href="/categories/create") Nueva categoria

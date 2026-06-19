@@ -1,0 +1,21 @@
+header(class="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur")
+  div(class="flex h-16 items-center justify-between gap-4 px-4 sm:px-6 lg:px-8")
+    div(class="flex min-w-0 items-center gap-3")
+      button#sidebarToggle(type="button" class="rounded-md border border-slate-200 bg-white p-2 text-slate-600 shadow-sm hover:bg-slate-50 lg:hidden" aria-label="Abrir menu")
+        span(class="block h-0.5 w-5 bg-current")
+        span(class="mt-1.5 block h-0.5 w-5 bg-current")
+        span(class="mt-1.5 block h-0.5 w-5 bg-current")
+      div(class="min-w-0")
+        p(class="text-xs font-semibold uppercase tracking-wide text-bright_teal_blue-500")= appName
+        h1(class="truncate text-lg font-semibold text-slate-900")= title || "Panel"
+
+    div(class="flex items-center gap-3")
+      if currentUser
+        div(class="hidden text-right sm:block")
+          p(class="text-sm font-semibold text-slate-900")= currentUser.name
+          p(class="text-xs text-slate-500")= currentUser.role
+        form(action="/logout" method="POST")
+          input(type="hidden" name="_csrf" value=csrfToken)
+          button(type="submit" class="btn-secondary") Salir
+      else
+        a(href="/login" class="btn-primary") Iniciar sesion

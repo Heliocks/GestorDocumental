@@ -1,0 +1,45 @@
+{
+  "name": "document-manager",
+  "version": "1.0.0",
+  "description": "MVC document management platform built with Node.js, Express, PostgreSQL, Pug and Tailwind CSS.",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "concurrently \"nodemon src/app.js\" \"npm run watch:css\"",
+    "build:css": "tailwindcss -i ./src/public/css/input.css -o ./src/public/css/styles.css --minify",
+    "watch:css": "tailwindcss -i ./src/public/css/input.css -o ./src/public/css/styles.css --watch",
+    "db:setup": "node scripts/setupDatabase.js",
+    "db:init": "psql -U postgres -d document_manager -f ./sql/schema.sql",
+    "db:seed": "node scripts/seedAdmin.js"
+  },
+  "keywords": [
+    "documents",
+    "express",
+    "postgresql",
+    "pug",
+    "tailwindcss"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "connect-pg-simple": "^9.0.1",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-session": "^1.18.1",
+    "express-validator": "^7.2.1",
+    "helmet": "^8.0.0",
+    "method-override": "^3.0.0",
+    "morgan": "^1.10.0",
+    "multer": "^2.0.2",
+    "pg": "^8.13.1",
+    "pug": "^3.0.3"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.20",
+    "concurrently": "^9.1.2",
+    "nodemon": "^3.1.9",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17"
+  }
+}

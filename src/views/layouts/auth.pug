@@ -1,0 +1,17 @@
+doctype html
+html(lang="es")
+  head
+    meta(charset="utf-8")
+    meta(name="viewport" content="width=device-width, initial-scale=1")
+    title #{title ? `${title} | ${appName}` : appName}
+    link(rel="stylesheet" href="/css/styles.css")
+  body(class="min-h-screen bg-slate-950")
+    main(class="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top_left,#0077b6_0,#03045e_32%,#020338_100%)] px-4 py-10")
+      div(class="w-full max-w-md")
+        div(class="mb-8 text-center text-white")
+          div(class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-lg bg-white/10 text-xl font-bold ring-1 ring-white/20") GD
+          h1(class="text-3xl font-semibold") Gestor Documental
+          p(class="mt-2 text-sm text-frosted_blue-800") Acceso seguro al panel administrativo
+
+        include ../partials/alerts
+        block content
